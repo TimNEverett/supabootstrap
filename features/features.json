@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "features": {
+    "placeholder-feature": {
+      "name": "Placeholder Feature",
+      "description": "Example feature showing the structure",
+      "version": "1.0.0",
+      "dependencies": [],
+      "category": "example"
+    },
+    "edge-fn-utils": {
+      "name": "Edge Function Utilities", 
+      "description": "Core utilities for invoking edge functions from database",
+      "version": "1.0.0",
+      "dependencies": [],
+      "category": "core"
+    },
+    "rag-database": {
+      "name": "RAG Database with Embeddings",
+      "description": "Vector embeddings and similarity search for RAG applications", 
+      "version": "1.0.0",
+      "dependencies": ["edge-fn-utils"],
+      "category": "ai"
+    }
+  }
+}
