@@ -185,4 +185,30 @@ export class PromptUtils {
     const ora = require('ora');
     return ora(message).start();
   }
+
+  /**
+   * Clear the current line and move cursor to beginning
+   */
+  static clearLine(): void {
+    if (process.stdout.isTTY) {
+      process.stdout.write('\r\x1b[K');
+    }
+  }
+
+  /**
+   * Show temporary message that can be cleared later
+   */
+  static showTemp(message: string): void {
+    process.stdout.write(message);
+  }
+
+  /**
+   * Clear temporary message and show final message
+   */
+  static replaceTemp(finalMessage?: string): void {
+    this.clearLine();
+    if (finalMessage) {
+      console.log(finalMessage);
+    }
+  }
 }

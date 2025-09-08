@@ -6,6 +6,7 @@ import { featureRegistry } from './registry';
 import { supabaseCLI } from './supabase-cli';
 import { configManager } from './config';
 import { debug } from '../utils/debug';
+import { PromptUtils } from '../utils/prompts';
 
 export class FeatureInstaller {
   private config: SupaBootstrapConfig;
@@ -89,27 +90,29 @@ export class FeatureInstaller {
     const errors: string[] = [];
 
     try {
-      console.log(`📁 Installing schemas...`);
+      PromptUtils.showTemp(`📁 Installing schemas...`);
       debug.info('Starting schema installation...');
       // Install schema files
       await this.installSchemas(featureId, featurePath, conflictResolutions, installedFiles, skippedFiles);
+      PromptUtils.clearLine();
 
-      console.log(`📄 Installing migrations...`);
+      PromptUtils.showTemp(`📄 Installing migrations...`);
       debug.info('Starting migration installation...');
       // Install migrations (always create new ones)
       await this.installMigrations(featureId, featurePath, installedFiles, errors);
+      PromptUtils.clearLine();
 
-      console.log(`⚡ Installing functions...`);
+      PromptUtils.showTemp(`⚡ Installing functions...`);
       debug.info('Starting function installation...');
       // Install functions
       await this.installFunctions(featureId, featurePath, conflictResolutions, installedFiles, skippedFiles, errors);
+      PromptUtils.clearLine();
 
-      console.log(`💾 Updating configuration...`);
+      PromptUtils.showTemp(`💾 Updating configuration...`);
       debug.info('Updating configuration...');
       // Update configuration to track installed feature
       await this.updateInstalledFeatures(featureId, installedFiles);
-
-      console.log(`✅ Installation completed`);
+      PromptUtils.clearLine();
       debug.info('Installation completed successfully');
       return {
         success: errors.length === 0,

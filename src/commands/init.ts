@@ -11,7 +11,7 @@ export async function initCommand(): Promise<void> {
     console.log(chalk.blue('🚀 Initializing SupaBootstrap project...\n'));
 
     // 1. Check if Supabase CLI is available
-    console.log('📋 Checking requirements...');
+    PromptUtils.showTemp('📋 Checking requirements...');
     
     const isSupabaseCLIAvailable = await supabaseCLI.checkCLIAvailable();
     if (!isSupabaseCLIAvailable) {
@@ -20,7 +20,7 @@ export async function initCommand(): Promise<void> {
     }
     
     const version = await supabaseCLI.getVersion();
-    console.log(chalk.green(`  ✓ Supabase CLI found (version: ${version || 'unknown'})`));
+    PromptUtils.replaceTemp(chalk.green(`  ✓ Supabase CLI found (version: ${version || 'unknown'})`));
 
     // 2. Check if config already exists
     const existingConfig = configManager.findConfigFile(projectRoot);

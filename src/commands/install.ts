@@ -8,7 +8,6 @@ import { PromptUtils } from '../utils/prompts';
 
 export async function installCommand(featureId: string): Promise<void> {
   try {
-    console.log(chalk.blue(`🚀 Installing feature: ${featureId}\n`));
 
     // 1. Load configuration
     const config = configManager.loadConfig();
@@ -56,16 +55,6 @@ export async function installCommand(featureId: string): Promise<void> {
       }
     }
 
-    // 6. Display feature information
-    console.log(chalk.blue('📦 Feature Details:'));
-    console.log(`  ${chalk.bold(feature.name)} (v${feature.version})`);
-    console.log(`  ${feature.description}`);
-    console.log(`  Category: ${feature.category}`);
-    
-    if (feature.dependencies.length > 0) {
-      console.log(`  Dependencies: ${feature.dependencies.join(', ')}`);
-    }
-    console.log('');
 
     // 7. Check dependencies
     const installer = new FeatureInstaller(config, projectRoot);
@@ -90,8 +79,9 @@ export async function installCommand(featureId: string): Promise<void> {
         );
         
         for (const dep of missingDeps) {
-          console.log(chalk.yellow(`\n📦 Installing dependency: ${dep}`));
+          PromptUtils.showTemp(chalk.yellow(`📦 Installing dependency: ${dep}...`));
           await installFeatureRecursive(dep, installer, config, projectRoot);
+          PromptUtils.replaceTemp(chalk.green(`  ✓ Dependency '${dep}' installed`));
         }
       } else {
         PromptUtils.showError('Cannot install feature without its dependencies.');
@@ -99,74 +89,39 @@ export async function installCommand(featureId: string): Promise<void> {
       }
     }
 
-    // 8. Analyze conflicts
-    console.log(chalk.blue('🔍 Checking for file conflicts...'));
-    const spinner = PromptUtils.showSpinner('Analyzing potential conflicts...');
-    
+    // 8. Analyze conflicts (silently)
     const conflicts = await installer.analyzeConflicts(featureId);
-    spinner.stop();
 
     // 9. Handle conflicts if any
     let conflictResolutions = conflicts;
     if (conflicts.length > 0) {
       conflictResolutions = await PromptUtils.handleFileConflicts(conflicts);
-    } else {
-      console.log(chalk.green('  ✓ No conflicts detected'));
     }
 
-    // 10. Show installation plan
-    console.log('\n' + chalk.blue('📋 Installation Plan:'));
-    
+    // 10. Skip confirmation - just proceed (conflicts are handled separately)
+
+    // 12. Get feature info for next steps
     const featurePath = featureRegistry.getFeaturePath(featureId);
-    const hasSchemas = installer.hasSchemas(featurePath);
     const hasMigrations = installer.hasMigrations(featurePath);
     const hasFunctions = installer.hasFunctions(featurePath);
-    
-    if (hasSchemas) console.log(`  • Install schema files to: ${config.sourceDir}/schemas/`);
-    if (hasMigrations) console.log(`  • Create new migration files using Supabase CLI`);
-    if (hasFunctions) console.log(`  • Create edge functions using Supabase CLI`);
-    
-    if (config.filePrefix) {
-      console.log(`  • Apply prefix '${config.filePrefix}' to all files`);
-    }
 
-    // 11. Final confirmation
-    const proceed = await PromptUtils.confirmAction('\nProceed with installation?', true);
-    if (!proceed) {
-      PromptUtils.showInfo('Installation cancelled.');
-      return;
-    }
-
-    // 12. Install the feature
-    console.log('\n' + chalk.blue('🔧 Installing feature...'));
+    // 13. Install the feature
+    PromptUtils.showTemp(chalk.blue('Installing...'));
     const installSpinner = PromptUtils.showSpinner('Installing files...');
     
     const result = await installer.installFeature(featureId, conflictResolutions);
     installSpinner.stop();
+    PromptUtils.clearLine();
 
-    // 13. Show results
+    // 14. Show results
     if (result.success) {
       PromptUtils.showSuccess(`Feature '${featureId}' installed successfully!`, [
         `Installed ${result.installedFiles.length} files`,
         result.skippedFiles.length > 0 ? `Skipped ${result.skippedFiles.length} files` : null,
       ].filter(Boolean) as string[]);
 
-      if (result.installedFiles.length > 0) {
-        console.log(chalk.blue('📁 Installed files:'));
-        for (const file of result.installedFiles) {
-          console.log(`  ${chalk.green('✓')} ${file}`);
-        }
-      }
-
-      if (result.skippedFiles.length > 0) {
-        console.log(chalk.yellow('\n⚠️  Skipped files:'));
-        for (const file of result.skippedFiles) {
-          console.log(`  ${chalk.yellow('-')} ${file}`);
-        }
-      }
-
       // Show next steps
-      console.log('\n' + chalk.blue('🎯 Next steps:'));
+      console.log(chalk.blue('🎯 Next steps:'));
       if (hasMigrations) {
         console.log(`  • Run ${chalk.cyan('supabase db reset')} or ${chalk.cyan('supabase migration up')} to apply migrations`);
       }
@@ -211,6 +166,4 @@ async function installFeatureRecursive(
   if (!result.success) {
     throw new Error(`Failed to install dependency '${featureId}': ${result.errors.join(', ')}`);
   }
-  
-  console.log(chalk.green(`  ✓ Dependency '${featureId}' installed`));
 }
