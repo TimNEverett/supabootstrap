@@ -1,8 +1,9 @@
-import { exec, execSync } from 'child_process';
-import { promisify } from 'util';
-import fs from 'fs';
-import path from 'path';
-import chalk from 'chalk';
+import { exec, execSync } from "child_process";
+import { promisify } from "util";
+import fs from "fs";
+import path from "path";
+import chalk from "chalk";
+import { debug } from "../utils/debug";
 
 const execAsync = promisify(exec);
 
@@ -12,7 +13,7 @@ export class SupabaseCLI {
    */
   async checkCLIAvailable(): Promise<boolean> {
     try {
-      await execAsync('supabase --version');
+      await execAsync("supabase --version");
       return true;
     } catch (error) {
       return false;
@@ -24,7 +25,7 @@ export class SupabaseCLI {
    */
   async getVersion(): Promise<string | null> {
     try {
-      const { stdout } = await execAsync('supabase --version');
+      const { stdout } = await execAsync("supabase --version");
       // Extract version from output like "supabase version 1.xx.x"
       const match = stdout.trim().match(/supabase version (\d+\.\d+\.\d+)/);
       return match ? match[1] : null;
@@ -37,61 +38,100 @@ export class SupabaseCLI {
    * Initialize a new Supabase project in the specified directory
    */
   async initProject(projectPath: string): Promise<void> {
-    const supabasePath = path.join(projectPath, 'supabase');
-    
+    const supabasePath = path.join(projectPath, "supabase");
+
     // Check if supabase directory already exists
     if (fs.existsSync(supabasePath)) {
       throw new Error(`Supabase project already exists at: ${supabasePath}`);
     }
 
     try {
-      await execAsync('supabase init', { cwd: projectPath });
+      await execAsync("supabase init", { cwd: projectPath });
     } catch (error) {
-      throw new Error(`Failed to initialize Supabase project: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to initialize Supabase project: ${(error as Error).message}`
+      );
     }
   }
 
   /**
    * Create a new migration with the given name
    */
-  async createMigration(name: string, projectPath: string): Promise<string> {
+  createMigration(name: string, projectPath: string): string {
+    debug.info(`createMigration called with name: "${name}", projectPath: "${projectPath}"`);
+
     if (!this.isSupabaseProject(projectPath)) {
       throw new Error('Not a Supabase project. Run "supabase init" first.');
     }
 
+    const command = `supabase migration new "${name}" --yes`;
+    debug.info(`Executing command: ${command}`);
+    debug.info(`Working directory: ${projectPath}`);
+
     try {
-      const { stdout } = await execAsync(`supabase migration new "${name}"`, { 
-        cwd: projectPath 
+      debug.info('Starting execSync...');
+      debug.time('Migration creation');
+
+      const stdout = execSync(command, {
+        cwd: projectPath,
+        encoding: 'utf8',
+        timeout: 10000 // 10 second timeout
       });
-      
+
+      debug.timeEnd('Migration creation');
+      debug.info(`stdout: "${stdout.trim()}"`);
+
       // Extract the migration filename from the output
       // Output typically includes something like "Created new migration at supabase/migrations/20240907120001_name.sql"
       const match = stdout.match(/supabase\/migrations\/(\d+_.*\.sql)/);
       if (!match) {
-        throw new Error('Could not extract migration filename from CLI output');
+        debug.error(`Failed to extract filename from stdout: "${stdout}"`);
+        throw new Error("Could not extract migration filename from CLI output");
       }
-      
+
+      debug.info(`Extracted filename: ${match[1]}`);
       return match[1]; // Return just the filename
     } catch (error) {
-      throw new Error(`Failed to create migration: ${(error as Error).message}`);
+      debug.error(`Error occurred: ${(error as Error).message}`);
+      debug.error(`Error type: ${(error as Error).constructor.name}`);
+      throw new Error(
+        `Failed to create migration: ${(error as Error).message}`
+      );
     }
   }
 
   /**
    * Create a new edge function with the given name
    */
-  async createFunction(name: string, projectPath: string): Promise<string> {
+  createFunction(name: string, projectPath: string): string {
+    debug.info(`createFunction called with name: "${name}", projectPath: "${projectPath}"`);
+
     if (!this.isSupabaseProject(projectPath)) {
       throw new Error('Not a Supabase project. Run "supabase init" first.');
     }
 
+    const command = `supabase functions new "${name}" --yes`;
+    debug.info(`Executing command: ${command}`);
+    debug.info(`Working directory: ${projectPath}`);
+
     try {
-      await execAsync(`supabase functions new "${name}"`, { 
-        cwd: projectPath 
+      debug.info('Starting execSync...');
+      debug.time('Function creation');
+
+      const stdout = execSync(command, {
+        cwd: projectPath,
+        encoding: 'utf8',
+        timeout: 10000 // 10 second timeout
       });
-      
+
+      debug.timeEnd('Function creation');
+      debug.info(`stdout: "${stdout.trim()}"`);
+
+      debug.info(`Function creation successful, returning: ${name}`);
       return name;
     } catch (error) {
+      debug.error(`Error occurred: ${(error as Error).message}`);
+      debug.error(`Error type: ${(error as Error).constructor.name}`);
       throw new Error(`Failed to create function: ${(error as Error).message}`);
     }
   }
@@ -100,39 +140,47 @@ export class SupabaseCLI {
    * Check if the given directory is a Supabase project
    */
   isSupabaseProject(projectPath: string): boolean {
-    const supabasePath = path.join(projectPath, 'supabase');
-    const configPath = path.join(supabasePath, 'config.toml');
-    
-    return fs.existsSync(supabasePath) && 
-           fs.statSync(supabasePath).isDirectory() &&
-           fs.existsSync(configPath);
+    const supabasePath = path.join(projectPath, "supabase");
+    const configPath = path.join(supabasePath, "config.toml");
+
+    return (
+      fs.existsSync(supabasePath) &&
+      fs.statSync(supabasePath).isDirectory() &&
+      fs.existsSync(configPath)
+    );
   }
 
   /**
    * Validate that the current project has a proper Supabase setup
    */
   validateProject(projectPath: string): void {
-    const supabasePath = path.join(projectPath, 'supabase');
-    
+    const supabasePath = path.join(projectPath, "supabase");
+
     if (!fs.existsSync(supabasePath)) {
-      throw new Error('No supabase/ directory found. Run "supabase init" first.');
-    }
-    
-    if (!fs.statSync(supabasePath).isDirectory()) {
-      throw new Error('supabase/ exists but is not a directory.');
+      throw new Error(
+        'No supabase/ directory found. Run "supabase init" first.'
+      );
     }
 
-    const configPath = path.join(supabasePath, 'config.toml');
+    if (!fs.statSync(supabasePath).isDirectory()) {
+      throw new Error("supabase/ exists but is not a directory.");
+    }
+
+    const configPath = path.join(supabasePath, "config.toml");
     if (!fs.existsSync(configPath)) {
-      throw new Error('supabase/config.toml not found. This may not be a valid Supabase project.');
+      throw new Error(
+        "supabase/config.toml not found. This may not be a valid Supabase project."
+      );
     }
 
     // Check for required directories
-    const requiredDirs = ['migrations', 'functions'];
+    const requiredDirs = ["migrations", "functions"];
     for (const dir of requiredDirs) {
       const dirPath = path.join(supabasePath, dir);
       if (!fs.existsSync(dirPath)) {
-        console.warn(chalk.yellow(`Warning: ${dir} directory not found at ${dirPath}`));
+        console.warn(
+          chalk.yellow(`Warning: ${dir} directory not found at ${dirPath}`)
+        );
       }
     }
   }
@@ -141,21 +189,21 @@ export class SupabaseCLI {
    * Get the path to the Supabase directory for a project
    */
   getSupabasePath(projectPath: string): string {
-    return path.join(projectPath, 'supabase');
+    return path.join(projectPath, "supabase");
   }
 
   /**
    * Get the path to migrations directory
    */
   getMigrationsPath(projectPath: string): string {
-    return path.join(this.getSupabasePath(projectPath), 'migrations');
+    return path.join(this.getSupabasePath(projectPath), "migrations");
   }
 
   /**
    * Get the path to functions directory
    */
   getFunctionsPath(projectPath: string): string {
-    return path.join(this.getSupabasePath(projectPath), 'functions');
+    return path.join(this.getSupabasePath(projectPath), "functions");
   }
 
   /**
@@ -169,13 +217,13 @@ export class SupabaseCLI {
    * Show helpful error message when CLI is not available
    */
   static showInstallInstructions(): void {
-    console.log(chalk.red('✗ Supabase CLI not found\n'));
-    console.log('SupaBootstrap requires the Supabase CLI to be installed.\n');
-    console.log('Install it with:');
-    console.log(chalk.cyan('  npm install -g supabase'));
-    console.log(chalk.gray('  # or'));
-    console.log(chalk.cyan('  brew install supabase/tap/supabase'));
-    console.log('\nThen run this command again.');
+    console.log(chalk.red("✗ Supabase CLI not found\n"));
+    console.log("SupaBootstrap requires the Supabase CLI to be installed.\n");
+    console.log("Install it with:");
+    console.log(chalk.cyan("  npm install -g supabase"));
+    console.log(chalk.gray("  # or"));
+    console.log(chalk.cyan("  brew install supabase/tap/supabase"));
+    console.log("\nThen run this command again.");
   }
 }
 

@@ -6,13 +6,22 @@ import { listCommand } from './commands/list';
 import { installCommand } from './commands/install';
 import { uninstallCommand } from './commands/uninstall';
 import { doctorCommand } from './commands/doctor';
+import { debug } from './utils/debug';
 
 const program = new Command();
 
 program
   .name('supabootstrap')
   .description('A CLI utility to install database features into Supabase projects')
-  .version('1.0.0');
+  .version('1.0.0')
+  .option('--debug', 'enable debug logging')
+  .hook('preAction', (thisCommand) => {
+    const options = thisCommand.opts();
+    if (options.debug) {
+      debug.enable();
+      debug.info('Debug logging enabled');
+    }
+  });
 
 program
   .command('init')
