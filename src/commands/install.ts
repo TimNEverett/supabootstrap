@@ -59,25 +59,26 @@ export async function installCommand(featureId: string): Promise<void> {
     // 7. Check dependencies
     const installer = new FeatureInstaller(config, projectRoot);
     const dependencyCheck = installer.checkDependencies(featureId);
-    
+
     if (!dependencyCheck.satisfied) {
+      // Get all transitive dependencies that need to be installed
+      const allDependencies = featureRegistry.resolveDependencies(featureId);
+      const missingDeps = allDependencies.filter(dep =>
+        dep !== featureId && !config.installedFeatures[dep]
+      );
+
       PromptUtils.showError('Missing required dependencies:');
-      for (const dep of dependencyCheck.missing) {
-        console.log(`  • ${chalk.red(dep)}`);
+      for (const dep of missingDeps) {
+        const depFeature = featureRegistry.getFeature(dep);
+        console.log(`  • ${chalk.red(dep)} - ${depFeature?.name || 'Unknown feature'}`);
       }
-      
+
       const installDeps = await PromptUtils.confirmAction(
-        'Install missing dependencies first?',
+        `Install ${missingDeps.length} missing dependencies first?`,
         true
       );
-      
+
       if (installDeps) {
-        // Resolve and install dependencies
-        const allDependencies = featureRegistry.resolveDependencies(featureId);
-        const missingDeps = allDependencies.filter(dep => 
-          dep !== featureId && !config.installedFeatures[dep]
-        );
-        
         for (const dep of missingDeps) {
           PromptUtils.showTemp(chalk.yellow(`📦 Installing dependency: ${dep}...`));
           await installFeatureRecursive(dep, installer, config, projectRoot);
