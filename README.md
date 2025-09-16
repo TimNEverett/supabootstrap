@@ -6,7 +6,7 @@ A CLI utility to install database features into Supabase projects by copying fil
 
 ### Prerequisites
 
-- Node.js 16+ 
+- Node.js 16+
 - [Supabase CLI](https://supabase.com/docs/guides/cli) installed globally
 
 ```bash
@@ -28,11 +28,13 @@ npx supabootstrap --help
 ### Basic Usage
 
 1. **Initialize your project**
+
    ```bash
    npx supabootstrap init
    ```
 
 2. **See available features**
+
    ```bash
    npx supabootstrap list
    ```
@@ -44,32 +46,30 @@ npx supabootstrap --help
 
 ## Features
 
-SupaBootstrap comes with pre-built features organized by category:
+SupaBootstrap comes with pre-built features:
 
-### 🤖 AI Features
-- **RAG Database** - Vector embeddings and similarity search for RAG applications
-
-### 🔧 Core Features  
-- **Edge Function Utilities** - Core utilities for invoking edge functions from database
-
-### 📝 Example Features
-- **Placeholder Feature** - Example feature showing the structure
+TODO: add features
 
 ## Commands
 
 ### `supabootstrap init`
+
 Initialize project and create configuration file. This will:
+
 - Check if Supabase CLI is available
-- Optionally run `supabase init` if no Supabase project exists  
+- Optionally run `supabase init` if no Supabase project exists
 - Create `.supabootstrap.json` configuration file
 - Set up file prefix and directory options
 
 ### `supabootstrap list`
+
 Show available features with descriptions, categories, dependencies, and installation status.
 
 ### `supabootstrap install <feature>`
+
 Install a feature with conflict resolution. Features may include:
-- SQL schema files 
+
+- SQL schema files
 - Database migrations
 - Edge functions
 - Documentation
@@ -77,9 +77,11 @@ Install a feature with conflict resolution. Features may include:
 The CLI will detect file conflicts and ask you which files to overwrite.
 
 ### `supabootstrap uninstall <feature>`
+
 Remove a previously installed feature (Coming soon).
 
-### `supabootstrap doctor` 
+### `supabootstrap doctor`
+
 Check for modified feature files to detect if installed files have been changed (Coming soon).
 
 ## Configuration
@@ -93,7 +95,7 @@ SupaBootstrap uses a `.supabootstrap.json` file in your project root:
   "filePrefix": "sb_",
   "installedFeatures": {
     "placeholder-feature": {
-      "version": "1.0.0", 
+      "version": "1.0.0",
       "installedAt": "2024-09-07T12:00:00Z",
       "files": [
         "migrations/20240907120001_sb_create_placeholder_table.sql",
@@ -113,18 +115,22 @@ SupaBootstrap uses a `.supabootstrap.json` file in your project root:
 ## How It Works
 
 ### File Conflict Resolution
+
 When installing features, SupaBootstrap will:
+
 1. Scan for existing files that would be overwritten
 2. Show you exactly which files conflict
 3. Let you choose which files to overwrite vs skip
 4. Apply your choices selectively
 
-### Migration Handling  
+### Migration Handling
+
 - Never overwrites existing migrations
 - Always creates new timestamped migrations using `supabase migration new`
 - Copies feature migration content into new migration files
 
 ### Function Handling
+
 - Creates functions using `supabase functions new` with proper structure
 - Replaces generated boilerplate with feature templates
 - Applies file prefixes to function names
@@ -132,12 +138,13 @@ When installing features, SupaBootstrap will:
 ## Development
 
 ### Project Structure
+
 ```
 supabootstrap/
 ├── src/
 │   ├── commands/     # CLI command implementations
 │   ├── core/         # Core functionality (config, registry, supabase)
-│   └── utils/        # Utilities (file ops, prompts, types)  
+│   └── utils/        # Utilities (file ops, prompts, types)
 ├── features/         # Feature definitions and templates
 ├── bin/              # Executable wrapper
 └── dist/             # Compiled JavaScript (generated)
@@ -152,7 +159,7 @@ pnpm install
 # Build the project
 pnpm build
 
-# Run in development  
+# Run in development
 pnpm dev
 
 # Test locally
@@ -164,7 +171,7 @@ pnpm dev
 1. Create feature directory: `features/my-feature/`
 2. Add feature files in subdirectories:
    - `schemas/` - SQL schema files
-   - `migrations/` - Migration templates  
+   - `migrations/` - Migration templates
    - `functions/` - Edge function code
 3. Write feature documentation: `features/my-feature/README.md`
 4. Update feature registry: `features/features.json`
