@@ -11,7 +11,8 @@
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "prepare": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "add-feature": "node scripts/add-feature.js"
   },
   "keywords": [
     "supabase",
@@ -44,5 +45,9 @@
     "bin",
     "features",
     "config-schema.json"
-  ]
+  ],
+  "volta": {
+    "node": "20.19.5",
+    "pnpm": "10.16.1"
+  }
 }

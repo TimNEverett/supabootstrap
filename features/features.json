@@ -3,10 +3,10 @@
   "features": {
     "placeholder-feature": {
       "name": "Placeholder Feature",
-      "description": "Example feature showing the structure",
+      "description": "Placeholder Feature feature implementation",
       "version": "1.0.0",
       "dependencies": [],
-      "category": "example"
+      "category": "custom"
     }
   }
 }

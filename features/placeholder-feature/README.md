@@ -1,47 +1,18 @@
-# Placeholder Feature
+# Placeholder Feature Feature
 
-This is an example feature that demonstrates the structure of SupaBootstrap features.
+## Description
+Brief description of the placeholder-feature feature.
 
-## What it includes
-
-- **Schema**: A simple placeholder table
-- **Migration**: SQL to create the placeholder table
-- **Function**: An example edge function that interacts with the table
+## Files
+- `schemas/placeholder-feature.sql` - Database schema definitions
+- `migrations/create_placeholder_feature.sql` - Database migration
+- `functions/placeholder-feature-fn/` - Edge function implementation
 
 ## Installation
-
-```bash
-npx supabootstrap install placeholder-feature
-```
+This feature will be installed automatically when selected during the supabootstrap installation process.
 
 ## Usage
+Add usage instructions here.
 
-After installation, you'll have:
-
-1. A new migration file that creates a `placeholder_items` table
-2. An edge function at `functions/placeholder-fn/` that can:
-   - Create new placeholder items
-   - List existing items
-
-## API
-
-The edge function accepts POST requests:
-
-```typescript
-// Create an item
-fetch('/functions/v1/placeholder-fn', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    action: 'create',
-    data: { name: 'My Item', description: 'A test item' }
-  })
-})
-
-// List items
-fetch('/functions/v1/placeholder-fn', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ action: 'list' })
-})
-```
+## Dependencies
+List any dependencies or prerequisites here.
