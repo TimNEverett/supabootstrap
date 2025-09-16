@@ -1,135 +1,31 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+// This enables autocomplete, go to definition, etc.
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+// Setup type definitions for built-in Supabase Runtime APIs
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+console.log("Hello from Functions!");
 
-  try {
-    // Create Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    )
+Deno.serve(async (req) => {
+  const { name } = await req.json();
+  const data = {
+    message: `Hello ${name}!`,
+  };
 
-    // Parse request body
-    const { action, data } = await req.json()
+  return new Response(JSON.stringify(data), {
+    headers: { "Content-Type": "application/json" },
+  });
+});
 
-    let result
+/* To invoke locally:
 
-    switch (action) {
-      case 'create':
-        // Create a new placeholder item
-        const { data: createData, error: createError } = await supabaseClient
-          .from('placeholder_items')
-          .insert([{
-            name: data.name,
-            description: data.description
-          }])
-          .select()
+  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
+  2. Make an HTTP request:
 
-        if (createError) {
-          throw createError
-        }
+  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/test' \
+    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
+    --header 'Content-Type: application/json' \
+    --data '{"name":"Functions"}'
 
-        result = { success: true, data: createData }
-        break
-
-      case 'list':
-        // List all placeholder items
-        const { data: listData, error: listError } = await supabaseClient
-          .from('placeholder_items')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        if (listError) {
-          throw listError
-        }
-
-        result = { success: true, data: listData }
-        break
-
-      case 'get':
-        // Get a specific placeholder item
-        const { data: getData, error: getError } = await supabaseClient
-          .from('placeholder_items')
-          .select('*')
-          .eq('id', data.id)
-          .single()
-
-        if (getError) {
-          throw getError
-        }
-
-        result = { success: true, data: getData }
-        break
-
-      case 'update':
-        // Update a placeholder item
-        const { data: updateData, error: updateError } = await supabaseClient
-          .from('placeholder_items')
-          .update({
-            name: data.name,
-            description: data.description
-          })
-          .eq('id', data.id)
-          .select()
-
-        if (updateError) {
-          throw updateError
-        }
-
-        result = { success: true, data: updateData }
-        break
-
-      case 'delete':
-        // Delete a placeholder item
-        const { error: deleteError } = await supabaseClient
-          .from('placeholder_items')
-          .delete()
-          .eq('id', data.id)
-
-        if (deleteError) {
-          throw deleteError
-        }
-
-        result = { success: true, message: 'Item deleted successfully' }
-        break
-
-      default:
-        throw new Error(`Unknown action: ${action}`)
-    }
-
-    return new Response(
-      JSON.stringify(result),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      },
-    )
-
-  } catch (error) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message,
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      },
-    )
-  }
-})
+*/

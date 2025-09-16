@@ -9,7 +9,7 @@ dist/
 *.tsbuildinfo
 
 # IDE
-.vscode/
+# .vscode/
 .idea/
 *.swp
 *.swo
