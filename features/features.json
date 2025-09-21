@@ -1,9 +1,9 @@
 {
   "version": "1.0.0",
   "features": {
-    "placeholder-feature": {
-      "name": "Placeholder Feature",
-      "description": "Placeholder Feature feature implementation",
+    "edge-function-utils": {
+      "name": "Edge Function Utils",
+      "description": "Utilities for calling edge functions from database functions",
       "version": "1.0.0",
       "dependencies": [],
       "category": "custom"
