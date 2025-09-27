@@ -214,6 +214,13 @@ export class SupabaseCLI {
   }
 
   /**
+   * Get the path to seed.sql file
+   */
+  getSeedPath(projectPath: string): string {
+    return path.join(this.getSupabasePath(projectPath), "seed.sql");
+  }
+
+  /**
    * Show helpful error message when CLI is not available
    */
   static showInstallInstructions(): void {

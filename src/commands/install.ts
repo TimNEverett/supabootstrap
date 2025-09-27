@@ -105,6 +105,7 @@ export async function installCommand(featureId: string): Promise<void> {
     const featurePath = featureRegistry.getFeaturePath(featureId);
     const hasMigrations = installer.hasMigrations(featurePath);
     const hasFunctions = installer.hasFunctions(featurePath);
+    const hasSeeds = installer.hasSeeds(featurePath);
 
     // 13. Install the feature
     PromptUtils.showTemp(chalk.blue('Installing...'));
@@ -123,8 +124,8 @@ export async function installCommand(featureId: string): Promise<void> {
 
       // Show next steps
       console.log(chalk.blue('🎯 Next steps:'));
-      if (hasMigrations) {
-        console.log(`  • Run ${chalk.cyan('supabase db reset')} or ${chalk.cyan('supabase migration up')} to apply migrations`);
+      if (hasMigrations || hasSeeds) {
+        console.log(`  • Run ${chalk.cyan('supabase db reset')} to apply migrations and seeds`);
       }
       if (hasFunctions) {
         console.log(`  • Run ${chalk.cyan('supabase functions deploy')} to deploy edge functions`);

@@ -137,6 +137,17 @@ export class FeatureInstaller {
       );
       PromptUtils.clearLine();
 
+      PromptUtils.showTemp(`🌱 Installing seeds...`);
+      debug.info("Starting seed installation...");
+      // Install seeds
+      await this.installSeeds(
+        featureId,
+        featurePath,
+        installedFiles,
+        errors
+      );
+      PromptUtils.clearLine();
+
       PromptUtils.showTemp(`💾 Updating configuration...`);
       debug.info("Updating configuration...");
       // Update configuration to track installed feature
@@ -382,6 +393,87 @@ export class FeatureInstaller {
   }
 
   /**
+   * Install seed files
+   */
+  private async installSeeds(
+    featureId: string,
+    featurePath: string,
+    installedFiles: string[],
+    errors: string[]
+  ): Promise<void> {
+    const seedPath = path.join(featurePath, "seed");
+    if (!FileOperations.directoryExists(seedPath)) {
+      debug.info(`No seed directory found at ${seedPath}`);
+      return;
+    }
+
+    const seedFiles = FileOperations.getFilesInDirectory(seedPath).filter(
+      (file) => file.endsWith(".sql")
+    );
+
+    debug.info(`Found ${seedFiles.length} seed files to install`);
+
+    if (seedFiles.length === 0) {
+      return;
+    }
+
+    const targetSeedPath = supabaseCLI.getSeedPath(this.projectRoot);
+
+    // Check if target seed.sql exists, create if not
+    let existingSeedContent = "";
+    if (FileOperations.fileExists(targetSeedPath)) {
+      existingSeedContent = FileOperations.readFile(targetSeedPath);
+    }
+
+    // Check if this feature's seeds are already installed
+    const featureCommentBlock = `-- BEGIN: ${featureId} seeds`;
+    if (existingSeedContent.includes(featureCommentBlock)) {
+      debug.info(`Seeds for feature '${featureId}' already installed, skipping`);
+      return;
+    }
+
+    // Collect all seed content
+    let seedContent = `\n${featureCommentBlock}\n`;
+
+    for (const seedFile of seedFiles) {
+      try {
+        debug.info(`Processing seed file: ${path.basename(seedFile)}`);
+        const content = FileOperations.readFile(seedFile);
+        seedContent += `-- From: ${path.basename(seedFile)}\n`;
+        seedContent += content;
+        if (!content.endsWith('\n')) {
+          seedContent += '\n';
+        }
+        seedContent += '\n';
+      } catch (error) {
+        const errorMsg = `Failed to read seed file ${seedFile}: ${
+          (error as Error).message
+        }`;
+        console.error(`  • Error: ${errorMsg}`);
+        debug.error(`Seed file reading error: ${errorMsg}`);
+        errors.push(errorMsg);
+      }
+    }
+
+    seedContent += `-- END: ${featureId} seeds\n`;
+
+    try {
+      // Append to existing seed.sql or create new one
+      const finalContent = existingSeedContent + seedContent;
+      FileOperations.writeFile(targetSeedPath, finalContent);
+
+      const relativePath = path.relative(this.projectRoot, targetSeedPath);
+      installedFiles.push(relativePath);
+      debug.info(`Seeds installed to: ${relativePath}`);
+    } catch (error) {
+      const errorMsg = `Failed to write seed file: ${(error as Error).message}`;
+      console.error(`  • Error: ${errorMsg}`);
+      debug.error(`Seed file writing error: ${errorMsg}`);
+      errors.push(errorMsg);
+    }
+  }
+
+  /**
    * Update configuration to track installed feature
    */
   private async updateInstalledFeatures(
@@ -480,5 +572,18 @@ export class FeatureInstaller {
       .filter((entry) => entry.isDirectory());
 
     return functionDirs.length > 0;
+  }
+
+  /**
+   * Check if a feature has seed files
+   */
+  hasSeeds(featurePath: string): boolean {
+    const seedPath = path.join(featurePath, "seed");
+    return (
+      FileOperations.directoryExists(seedPath) &&
+      FileOperations.getFilesInDirectory(seedPath).filter((f) =>
+        f.endsWith(".sql")
+      ).length > 0
+    );
   }
 }
