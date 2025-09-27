@@ -48,7 +48,7 @@ npx supabootstrap --help
 
 SupaBootstrap comes with pre-built features:
 
-TODO: add features
+- **[edge-function-utils](features/edge-function-utils/README.md)** - Utility functions and schemas for edge function development
 
 ## Commands
 
